@@ -1,0 +1,59 @@
+doctype html
+
+html(lang="en")
+    head
+        meta(charset="UTF-8")
+        meta(name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0")
+        title=title + " | Viblo Embed Provider"
+        style.
+            body {
+                font-size: 1rem;
+                line-height: 1.5;
+                margin: 0;
+                background-color: white;
+                overflow: hidden;
+            }
+            iframe {
+                max-width: 100%;
+            }
+            .gist .gist-file {
+                margin-bottom: 0 !important;
+            }
+            .gist {
+                text-rendering: auto;
+            }
+    body
+        script(src=embedURL charset="UTF-8")
+        script.
+            var height = -1;
+            var delayMs = 200;
+            function notifyResize (height) {
+                height = height ? height : document.documentElement.offsetHeight;
+                var resized = false;
+                if (window.donkey && donkey.resize) {
+                donkey.resize(height);
+                resized = true;
+            }
+                if (parent && parent._resizeIframe) {
+                var obj = { iframe: window.frameElement, height: height };
+                parent._resizeIframe(obj);
+                resized = true;
+            }
+                if (window.location && window.location.hash === "#amp=1" && window.parent && window.parent.postMessage) {
+                window.parent.postMessage({ sentinel: "amp", type: "embed-size", height: height }, "*");
+            }
+                if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.resize) {
+                window.webkit.messageHandlers.resize.postMessage(height);
+                resized = true;
+            }
+                return resized;
+            }
+            function maybeResize () {
+                if (document.documentElement.offsetHeight != height && notifyResize()) {
+                height = document.documentElement.offsetHeight;
+            }
+                delayMs = Math.min(delayMs * 2, 1000000);
+                setTimeout(maybeResize, delayMs);
+            }
+            maybeResize();
+

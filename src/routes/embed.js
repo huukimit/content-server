@@ -13,10 +13,8 @@ const sendErrorPage = (res, url) => res.status(404).send(
 )
 
 /** The data variable is object, must contains "embedURL" or "document" **/
-const embedResponse = (res, data, viewPath) => {
-    if (!viewPath) {
-        viewPath = resolve(__dirname, '../views/embed/embed.pug')
-    }
+const embedResponse = (res, data, viewPath = '../views/embed/embed.pug') => {
+    viewPath = resolve(__dirname, viewPath)
 
     return res.render(viewPath, data, (err, html) => {
         return err ? sendErrorPage(res, data.url) : res.send(html)
@@ -30,6 +28,14 @@ const fetchSlideShare = (url) => {
 
     return axios.get(endpoint, { params }).then(({ data }) => data)
 }
+
+router.get('/embed/gist', (req, res) => {
+    if (!req.query.url) return res.sendStatus(400)
+
+    const embedURL = req.query.url
+
+    return embedResponse(res, { embedURL, title: 'Gist embed' }, '../views/embed/gist.pug')
+})
 
 router.get('/embed/slideshare', async (req, res) => {
     if (!req.query.url) return res.sendStatus(400)
