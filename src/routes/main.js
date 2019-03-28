@@ -29,7 +29,7 @@ router.get('/posts/:hashId/contents', async function ({ params }, res) {
     }
 })
 
-router.get('/:commentableType/:hashId/contents/comments', async ({ params }, res) => {
+router.get('/prerender/:commentableType/:hashId/comments', async ({ params }, res) => {
     try {
         const { comments: { data = [] }, threads } = await getComments(params.commentableType, params.hashId)
 
