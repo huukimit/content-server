@@ -1,15 +1,15 @@
 import { embedNotFound, responseEmbed } from '../utils/page'
 import { Router } from 'express'
-import embed from '../libs/viblo-embed'
+import vibloEmbed from '../libs/viblo-embed'
 
 const router = Router()
 
 router.get('/embed', ({ query: { url, provider } }, res) => {
     if (!url) return embedNotFound(res)(url)
 
-    provider = embed.isValidProvider(provider) ? provider : undefined
+    provider = vibloEmbed.isValidProvider(provider) ? provider : undefined
 
-    embed.render(url, provider)
+    vibloEmbed.render(url, provider)
         .then(({ html, title }) => responseEmbed(res)(html, { title }))
         .catch((e) => {
             console.error(e)

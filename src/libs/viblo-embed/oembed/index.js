@@ -6,7 +6,6 @@ const providers = {
     'youtube': /^http[s]?:\/\/(?:www\.)?(youtube\.com|youtu\.be)/,
     'vimeo': /^http[s]?:\/\/(?:www\.)?(vimeo\.com)/,
     'slideshare': /^http[s]?:\/\/(?:www\.)?(slideshare\.net)/,
-    'codepen': /^http[s]?:\/\/(?:www\.)?(codepen\.io)/,
 }
 
 const sitesEmbedByID = {
@@ -27,49 +26,40 @@ const isOembed = (url, provider) => {
         return !!providers[provider]
     }
 
-    const validRegex = /^http[s]?:\/\/(?:www\.)?(youtube\.com|youtu\.be|vimeo\.com|slideshare\.net|codepen\.io)/
+    const validRegex = /^http[s]?:\/\/(?:www\.)?(youtube\.com|youtu\.be|vimeo\.com|slideshare\.net)/
     return validRegex.test(url)
 }
 
-const fetchNoembed = (url) => new Promise((resolve, reject) => {
-    requestNoembedHTML({ url, format: 'json' })
-        .then((response) => {
-            // Noembed always returns "200 OK".
-            const error = response.data.error
-            const embedNotFound = error && error.match(/(404)/)
-            if (!embedNotFound) {
-                return resolve(response)
-            }
+const fetchNoembed = async (url) => {
+    // Noembed always returns "200 OK".
+    const response = await requestNoembedHTML({ url, format: 'json' })
+    const error = response.data.error
+    const embedNotFound = error && error.match(/(404)/)
 
-            return requestNoembedHTML({ url: `${url}?ver-${new Date().getTime()}` })
-                .then(resolve)
-                .catch(reject)
-        })
-        .catch(reject)
-})
-
-const render = (url, provider = null) => new Promise((resolve, reject) => {
-    try {
-        // Because of legacy embed allows id use instead of URL.
-        const isIdUsing = !url.startsWith('http')
-
-        // Support render ID:
-        if (isIdUsing && provider) {
-            url = convertIdToURL(url, provider)
-        }
-
-        fetchNoembed(url)
-            .then(({ data: { html, title } }) => {
-                if (!html) {
-                    reject(new Error('Could not found HTML in response from Oembed provider'))
-                }
-
-                resolve({ html, title })
-            })
-    } catch (e) {
-        reject(e)
+    if (!embedNotFound) {
+        return response
     }
-})
+
+    return await requestNoembedHTML({ url: `${url}?v=${new Date().getTime()}` })
+}
+
+const render = async (url, provider = null) => {
+    // Because of legacy embed allows id use instead of URL.
+    const isIdUsing = !url.startsWith('http')
+
+    // Support render ID:
+    if (isIdUsing && provider) {
+        url = convertIdToURL(url, provider)
+    }
+
+    const { data: { html, title } } = await fetchNoembed(url)
+
+    if (!html) {
+        throw new Error('Could not found HTML in response from Oembed provider')
+    }
+
+    return { html, title }
+}
 
 export default {
     isOembed,
